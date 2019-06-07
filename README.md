@@ -1,0 +1,1 @@
+# WIPP-image-assembling-plugin
