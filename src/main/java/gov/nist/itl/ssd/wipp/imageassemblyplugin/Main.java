@@ -11,6 +11,11 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+
+/**
+ * 
+ * @author Mohamed Ouladi <mohamed.ouladi at nist.gov>
+ */
 public class Main {
 	private static final Logger LOG = Logger.getLogger(
 			Main.class.getName());
