@@ -80,7 +80,7 @@ public class ImageAssembling {
 				imageWriter.setMetadataRetrieve(metadata);
 				imageWriter.setTileSizeX(TILE_SIZE);
 				imageWriter.setTileSizeY(TILE_SIZE);
-				imageWriter.setInterleaved(false);
+				imageWriter.setInterleaved(metadata.getPixelsInterleaved(0));
 				imageWriter.setId(outputFile.getPath());
 				imageWriter.setCompression(CompressionType.LZW.getCompression());
 				imageWriter.saveBytes(0, bytesArr);
