@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 
 
 import gov.nist.isg.pyramidio.stitching.MistStitchedImageReader;
-import utils.TiledOmeTiffConverter;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
@@ -16,8 +15,9 @@ import loci.formats.FormatException;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
 import loci.formats.codec.CompressionType;
-import loci.formats.gui.BufferedImageWriter;
+import loci.formats.gui.AWTImageTools;
 import loci.formats.ome.OMEXMLMetadata;
+import loci.formats.out.OMETiffWriter;
 import loci.formats.services.OMEXMLService;
 import ome.xml.model.primitives.PositiveInteger;
 
@@ -30,7 +30,8 @@ public class ImageAssembling {
 	// Stitching vector naming conventions
 	private static final String STITCHING_VECTOR_FILENAME_PREFIX = "img-global-positions-";
 	private static final String STITCHING_VECTOR_FILENAME_SUFFIX = ".txt";
-
+	
+	// Tile size used in WIPP
 	private static final int TILE_SIZE = 1024;
 
 	private final File tilesFolder;
@@ -48,7 +49,6 @@ public class ImageAssembling {
 	}
 
 	public Integer run() throws Exception {
-
 		File[] timeSlices = stitchingVectorFolder.listFiles((dir, fn)
 				-> fn.startsWith(STITCHING_VECTOR_FILENAME_PREFIX)
 				&& fn.endsWith(STITCHING_VECTOR_FILENAME_SUFFIX));
@@ -71,27 +71,25 @@ public class ImageAssembling {
 
 			BufferedImage image = mistImageReader.read();                      
 			OMEXMLMetadata metadata = getMetadata(mistImageReader);
+			File outputFile = new File(outputFolder, "image_" + timeSliceStr + ".ome.tif");
 
-			File tempOutputFile = new File(outputFolder, "temp.ome.tif");
-			File outputFile = new File(outputFolder,
-					"image_" + timeSliceStr + ".ome.tif");
+			byte[][] imgBytes = AWTImageTools.getPixelBytes(image, !metadata.getPixelsBigEndian(0));
+			byte[] bytesArr = imgBytes[0];
 
-			try (BufferedImageWriter imageWriter = new BufferedImageWriter()) {
+			try (OMETiffWriter imageWriter = new OMETiffWriter()) {
 				imageWriter.setMetadataRetrieve(metadata);
-				imageWriter.setId(tempOutputFile.getPath());
+				imageWriter.setTileSizeX(TILE_SIZE);
+				imageWriter.setTileSizeY(TILE_SIZE);
+				imageWriter.setInterleaved(false);
+				imageWriter.setId(outputFile.getPath());
 				imageWriter.setCompression(CompressionType.LZW.getCompression());
-				imageWriter.saveImage(0, image);
+				imageWriter.saveBytes(0, bytesArr);
+
 			} catch (FormatException | IOException ex) {
 				throw new RuntimeException("No image writer found for file "
 						+ outputFile, ex);
 			}
-
-			TiledOmeTiffConverter tiledOmeTiffConverter = new TiledOmeTiffConverter(tempOutputFile.getPath(), outputFile.toString(), TILE_SIZE, TILE_SIZE);
-			tiledOmeTiffConverter.init();
-			tiledOmeTiffConverter.readWriteTiles();
-			tiledOmeTiffConverter.cleanup();
-
-			tempOutputFile.delete();
+			
 			timeSlicesBuilt++;
 		}
 		if (timeSlicesBuilt == 0) {
@@ -99,7 +97,6 @@ public class ImageAssembling {
 		}
 
 		return timeSlicesBuilt;
-
 	}
 
 	private OMEXMLMetadata getMetadata(MistStitchedImageReader mistImageReader) {
