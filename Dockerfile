@@ -1,6 +1,8 @@
 FROM openjdk:8-jdk-alpine
 LABEL maintainer="National Institute of Standards and Technology"
 
+COPY VERSION /
+
 ENV DEBIAN_FRONTEND noninteractive
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"

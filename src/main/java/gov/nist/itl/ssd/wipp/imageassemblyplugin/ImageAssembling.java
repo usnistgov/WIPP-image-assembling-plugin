@@ -12,6 +12,7 @@ import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
 import loci.formats.FormatException;
+import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
 import loci.formats.ImageReader;
 import loci.formats.codec.CompressionType;
@@ -69,12 +70,9 @@ public class ImageAssembling {
 				continue;
 			}
 
-			BufferedImage image = mistImageReader.read();                      
+			BufferedImage image = mistImageReader.read();
 			OMEXMLMetadata metadata = getMetadata(mistImageReader);
 			File outputFile = new File(outputFolder, "image_" + timeSliceStr + ".ome.tif");
-
-			byte[][] imgBytes = AWTImageTools.getPixelBytes(image, !metadata.getPixelsBigEndian(0));
-			byte[] bytesArr = imgBytes[0];
 
 			try (OMETiffWriter imageWriter = new OMETiffWriter()) {
 				imageWriter.setMetadataRetrieve(metadata);
@@ -83,7 +81,38 @@ public class ImageAssembling {
 				imageWriter.setInterleaved(metadata.getPixelsInterleaved(0));
 				imageWriter.setId(outputFile.getPath());
 				imageWriter.setCompression(CompressionType.LZW.getCompression());
-				imageWriter.saveBytes(0, bytesArr);
+				
+				// Initialize buffer for temporarily storing bytes
+				int bpp = FormatTools.getBytesPerPixel(imageWriter.getPixelTypes()[0]);
+				int tilePlaneSize = TILE_SIZE * TILE_SIZE * bpp;
+				byte[] bytesArr = new byte[tilePlaneSize];
+				byte[][] imgBytes = new byte[TILE_SIZE * bpp][TILE_SIZE * bpp];
+				
+				// Get tile read/write information
+				int width = mistImageReader.getWidth();
+				int height = mistImageReader.getHeight();
+
+				// Determined tiling information
+				int nXTiles = width / TILE_SIZE;
+				int nYTiles = height / TILE_SIZE;
+				if (nXTiles * TILE_SIZE != width) nXTiles++;
+				if (nYTiles * TILE_SIZE != height) nYTiles++;
+				
+				for (int y=0; y<nYTiles; y++) {
+					for (int x=0; x<nXTiles; x++) {
+						
+						int tileX = x * TILE_SIZE;
+						int tileY = y * TILE_SIZE;
+						
+						int effTileSizeX = (tileX + TILE_SIZE) < width ? TILE_SIZE : width - tileX;
+						int effTileSizeY = (tileY + TILE_SIZE) < height ? TILE_SIZE : height - tileY;
+
+						imgBytes = AWTImageTools.getPixelBytes(image, !metadata.getPixelsBigEndian(0),tileX, tileY, effTileSizeX, effTileSizeY);
+						bytesArr = imgBytes[0];
+						imageWriter.saveBytes(0, bytesArr, tileX, tileY, effTileSizeX, effTileSizeY);
+					}
+				}
+
 
 			} catch (FormatException | IOException ex) {
 				throw new RuntimeException("No image writer found for file "
