@@ -3,10 +3,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>gov.nist.itl.ssd.wipp</groupId>
 	<artifactId>wipp-image-assembling-plugin</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<name>WIPP image assembling plugin</name>
-
-
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -58,7 +56,7 @@
 		<dependency>
 			<groupId>ome</groupId>
 			<artifactId>formats-gpl</artifactId>
-			<version>6.0.1</version>
+			<version>6.2.0</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
@@ -78,4 +76,19 @@
 		</dependency>
 
 	</dependencies>
+	
+	<repositories>
+		<repository>
+			<id>ome.external</id>
+			<url>http://artifacts.openmicroscopy.org/artifactory/ome.external</url>
+		</repository>
+		<repository>
+			<id>ome.releases</id>
+			<url>http://artifacts.openmicroscopy.org/artifactory/ome.releases</url>
+		</repository>
+		<repository>
+			<id>ome.snapshots</id>
+			<url>http://artifacts.openmicroscopy.org/artifactory/ome.snapshots</url>
+		</repository>
+	</repositories>
 </project>
