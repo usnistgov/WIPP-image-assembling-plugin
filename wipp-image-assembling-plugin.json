@@ -1,11 +1,14 @@
 {
 	"name": "WIPP Image assembling plugin",
 	"version": "0.0.2",
+	"containerId": "wipp/wipp-image-assembling-plugin:0.0.2",
 	"title": "WIPP Image assembling",
 	"description": "Image assembling using NIST pyramidio",
-    "creator": "National Institute of Standards and Technology",
-	"containerId": "wipp/wipp-image-assembling-plugin:0.0.2",
-
+	"author": "Michael Majursky & Mohamed Ouladi",
+	"institution": "National Institute of Standards and Technology",
+	"repository": "https://github.com/usnistgov/WIPP-thresholding-plugin",
+	"website": null,
+	"citation": null,
 	"inputs": [
 		{
 			"name": "inputImages",
